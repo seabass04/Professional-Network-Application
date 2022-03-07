@@ -236,7 +236,7 @@ public class ProfNetwork {
       }//end if
 
       Greeting();
-      Messenger esql = null;
+      ProfNwtwork esql = null;
       try{
          // use postgres JDBC driver.
          Class.forName ("org.postgresql.Driver").newInstance ();
@@ -373,5 +373,22 @@ public class ProfNetwork {
    }//end
 
 // Rest of the functions definition go in here
+  public static void FriendList(ProfNetwork esqL){
+
+  }
+
+  public static void UpdateProfile(ProfNetwork esqL){
+
+  }
+
+  public static void NewMessage(ProfNetwork esqL){
+
+  }
+  
+  public static void SendRequest(ProfNetwork esqL){
+
+  }
+
+
 
 }//end ProfNetwork
