@@ -182,7 +182,7 @@ public class ProfNetwork {
        int rowCount = 0;
 
        // iterates through the result set and count nuber of results.
-       if(rs.next()){
+       while(rs.next()){
           rowCount++;
        }//end while
        stmt.close ();
@@ -250,7 +250,7 @@ public class ProfNetwork {
          boolean keepon = true;
          while(keepon) {
             // These are sample SQL statements
-            System.out.println("MAIN MENU");
+            System.out.println("\nMAIN MENU");
             System.out.println("---------");
             System.out.println("1. Create user");
             System.out.println("2. Log in");
@@ -265,19 +265,25 @@ public class ProfNetwork {
             if (authorisedUser != null) {
               boolean usermenu = true;
               while(usermenu) {
-                System.out.println("MAIN MENU");
+                System.out.println("\nMAIN MENU");
                 System.out.println("---------");
-                System.out.println("1. Goto Friend List");
-                System.out.println("2. Update Profile");
-                System.out.println("3. Write a new message");
-                System.out.println("4. Send Friend Request");
+                System.out.println("1. Compose message");
+		        System.out.println("2. View Message(s)");
+		        System.out.println("3. Change Password");
+		        System.out.println("4. Search People");
+                System.out.println("5. Send Connection Request");
+                System.out.println("6. View Connection Request(s)");
+                System.out.println("7. Change Request Status");
                 System.out.println(".........................");
                 System.out.println("9. Log out");
                 switch (readChoice()){
-                   case 1: FriendList(esql); break;
-                   case 2: UpdateProfile(esql); break;
-                   case 3: NewMessage(esql); break;
-                   case 4: SendRequest(esql); break;
+                   case 1: NewMessage(esql, authorisedUser); break;
+                   case 2: ViewMessage(esql, authorisedUser); break;
+                   case 3: ChangePassword(esql, authorisedUser); break;
+                   case 4: SearchPeople(esql); break;
+		           case 5: NewConnection(esql); break;
+		           case 6: ViewConnectionRequest(esql, authorisedUser); break;
+		           case 7: ChangeConnection(esql); break;
                    case 9: usermenu = false; break;
                    default : System.out.println("Unrecognized choice!"); break;
                 }
@@ -340,9 +346,7 @@ public class ProfNetwork {
          System.out.print("\tEnter user email: ");
          String email = in.readLine();
 
-	 //Creating empty contact\block lists for a user
-	 String query = String.format("INSERT INTO USR (userId, password, email, contact_list) VALUES ('%s','%s','%s')", login, password, email);
-
+	     String query = String.format("INSERT INTO USR (userId, password, email) VALUES ('%s','%s','%s')", login, password, email);
          esql.executeUpdate(query);
          System.out.println ("User successfully created!");
       }catch(Exception e){
@@ -373,15 +377,63 @@ public class ProfNetwork {
    }//end
 
 // Rest of the functions definition go in here
-  public static void FriendList(ProfNetwork esqL){
+  public static void NewConnection(ProfNetwork esqL){
 
   }
 
-  public static void UpdateProfile(ProfNetwork esqL){
-
+  public static void ViewConnectionRequest(ProfNetwork esqL, String usr){
+      try{
+         System.out.println("line 386");
+         // String query = String.format("SELECT userId, status FROM CONNECTION_USR WHERE connectionId = '%s' AND status != 'Accept'", usr);
+         String query = String.format("SELECT * FROM CONNECTION_USR");
+         esqL.executeQueryAndPrintResult(query);
+         System.out.println("line 389");
+		  
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
   }
 
-  public static void NewMessage(ProfNetwork esqL){
+  public static void ChangeConnection(ProfNetwork esqL){
+
+  }
+  public static void NewMessage(ProfNetwork esqL, String usr){
+	try{
+         System.out.println("\tEnter user: ");
+         String recieveruser = in.readLine();
+	
+	String q = String.format("SELECT * FROM USR WHERE userid = '%s'", recieveruser);
+	int results = esqL.executeQuery(q);
+
+	if (results > 0){
+	  System.out.println("\tEnter message: ");
+	  String msg = in.readLine();
+
+	  String q1 = String.format("SELECT * FROM Message");
+	  //esqL.executeQueryAndPrintResult(q1);
+	  int msgid = esqL.executeQuery(q1) + 1;
+	  System.out.println(msgid);
+	  String msgidstring = String.valueOf(msgid);
+	  //TODO Get curret time
+	  String sendTime = "10/9/2011 9:49:00 PM";
+	  String deleteStatus = "0"; 
+	  String status = "Delivered";
+	  String q2 = String.format("INSERT INTO Message(msgId, senderId, receiverId, contents,sendTime, deleteStatus, status) VALUES (%s, '%s', '%s', '%s', '%s', %s, '%s')", msgidstring, usr, recieveruser, msg, sendTime, deleteStatus, status);
+
+	  esqL.executeUpdate(q2);
+
+	System.out.println("Message Sent!");
+
+	String test = String.format("SELECT * FROM Message WHERE msgId = %s", msgidstring);
+	esqL.executeQueryAndPrintResult(test);
+	}
+	else{
+
+	  System.out.println("User not found");
+	}      
+	}catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
 
   }
   
@@ -389,6 +441,143 @@ public class ProfNetwork {
 
   }
 
+  public static void ChangePassword(ProfNetwork esql, String usr){
+	try{
+         System.out.println("\tEnter new password: ");
+         String newpass = in.readLine();
 
+	 //Creating empty contact\block lists for a user
+	 //String query = String.format("INSERT INTO USR (userId, password, email, contact_list) VALUES ('%s','%s','%s')", login, password, email);
+	 String query = String.format("UPDATE USR SET password = '%s' where userId = '%s' ", newpass, usr);
+
+
+         esql.executeUpdate(query);
+         System.out.println ("Password Changed Successfully");
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+
+  }
+  
+  public static void SearchPeople(ProfNetwork esql){
+	try{
+         System.out.print("\tEnter user to search: ");
+         String usr = in.readLine();
+
+	    String query = String.format("SELECT name, userId, email FROM USR WHERE name = '%s' ", usr);
+
+         esql.executeQueryAndPrintResult(query);
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+  }
+
+  public static void ViewMessage(ProfNetwork esql, String usr){
+	try{
+        while(true){
+            System.out.println("\nMESSAGE MENU");
+            System.out.println("---------");
+            System.out.println("1. View Sent Message(s)");
+            System.out.println("2. View Recieved Message(s)");
+            System.out.println("3. Read Message");
+            System.out.println("4. Delete Message");
+            System.out.println("9. Exit");
+            System.out.println("---------");
+            System.out.print("Enter option: ");
+            String option = in.readLine();
+
+            if(option.equals("1")){
+                String query = String.format("SELECT msgId, receiverId FROM Message WHERE senderId = '%s' AND deleteStatus != 1 AND deleteStatus != 3", usr);
+                esql.executeQueryAndPrintResult(query);
+            }
+            else if(option.equals("2")){
+                String query = String.format("SELECT msgId, senderId FROM Message WHERE receiverId = '%s' AND deleteStatus != 2 AND deleteStatus != 3" , usr);
+                esql.executeQueryAndPrintResult(query);
+            }
+            else if(option.equals("3")){
+                System.out.print("\tEnter message ID: ");
+                String msgid = in.readLine();
+                
+                String senderquery = String.format("SELECT * FROM Message WHERE msgId = %s AND senderId = '%s' AND deleteStatus != 1 AND deleteStatus != 3", msgid, usr);
+                int sendermsg = esql.executeQuery(senderquery);
+            
+                String receiverquery = String.format("SELECT * FROM Message WHERE msgId = %s AND receiverId = '%s' AND deleteStatus != 2 AND deleteStatus != 3", msgid, usr);
+                int receivermsg = esql.executeQuery(receiverquery);
+                
+                if(sendermsg > 0){
+                    String query = String.format("SELECT msgId, senderId, contents FROM Message WHERE msgId = %s AND senderId = '%s' " , msgid, usr);
+                    esql.executeQueryAndPrintResult(query);
+                    
+                    query = String.format("UPDATE Message SET status = 'Read' where msgId = '%s' ", msgid);
+                    esql.executeUpdate(query);
+                }
+                else if(receivermsg > 0){
+                    String query = String.format("SELECT msgId, senderId, contents FROM Message WHERE msgId = %s AND receiverId = '%s' " , msgid, usr);
+                    esql.executeQueryAndPrintResult(query);
+                    
+                    query = String.format("UPDATE Message SET status = 'Read' where msgId = '%s' ", msgid);
+                    esql.executeUpdate(query);
+                }
+                else{
+                    System.out.println("Invliad Message ID");
+                }
+    
+            }
+            else if(option.equals("4")){
+                System.out.print("\tEnter message ID: ");
+                String msgid = in.readLine();
+
+                String senderquery = String.format("SELECT * FROM Message WHERE msgId = %s AND senderId = '%s'", msgid, usr);
+                int sendermsg = esql.executeQuery(senderquery);
+            
+                String receiverquery = String.format("SELECT * FROM Message WHERE msgId = %s AND receiverId = '%s'", msgid, usr);
+                int receivermsg = esql.executeQuery(receiverquery);
+
+                if(sendermsg > 0){
+                    //get current del status
+                    String query = String.format("SELECT deleteStatus FROM Message where msgId = %s", msgid);
+                    List<List<String>> res = esql.executeQueryAndReturnResult(query);
+                    int currDelStatus = Integer.valueOf(res.get(0).get(0));
+                   
+                    //get new del status
+                    int newDelStatus = (currDelStatus == 0) ? 1 : 3;
+
+                    //update del status
+                    query = String.format("UPDATE Message SET deleteStatus = %s where msgId = '%s' ", newDelStatus, msgid);
+                    esql.executeUpdate(query);
+
+                    System.out.println("Message Deleted!");
+                }
+                else if(receivermsg > 0){
+                    //get current del status
+                    String query = String.format("SELECT deleteStatus FROM Message where msgId = %s", msgid);
+                    List<List<String>> res = esql.executeQueryAndReturnResult(query);
+                    int currDelStatus = Integer.valueOf(res.get(0).get(0));
+                   
+                    //get new del status
+                    int newDelStatus = (currDelStatus == 0) ? 2 : 3;
+
+                    //update del status
+                    query = String.format("UPDATE Message SET deleteStatus = %s where msgId = '%s' ", newDelStatus, msgid);
+                    esql.executeUpdate(query);
+
+                    System.out.println("Message Deleted!");
+                }
+                else{
+                    System.out.println("Invliad Message ID");
+                }
+            }
+            else if(option.equals("9")){
+                System.out.println("Exiting Message Menu\n");
+                break;
+            }
+            else{
+                System.out.println("Invalid Option");
+            }
+        }
+	}catch(Exception e){
+          System.err.println (e.getMessage ());
+	}
+  }
 
 }//end ProfNetwork

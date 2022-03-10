@@ -38,8 +38,8 @@ CREATE TABLE EDUCATIONAL_DETAILS(
 
 CREATE TABLE MESSAGE(
 	msgId integer UNIQUE NOT NULL, 
-	senderId char(10) NOT NULL,
-	receiverId char(10) NOT NULL,
+	senderId char(30) NOT NULL,
+	receiverId char(30) NOT NULL,
 	contents char(500) NOT NULL,
 	sendTime timestamp,
 	deleteStatus integer,
@@ -49,7 +49,7 @@ CREATE TABLE MESSAGE(
 
 CREATE TABLE CONNECTION_USR(
 	userId char(30) NOT NULL, 
-	connectionId char(10) NOT NULL, 
+	connectionId char(30) NOT NULL, 
 	status char(30) NOT NULL,
 	PRIMARY KEY(userId,connectionId),
 	FOREIGN KEY(userId) REFERENCES USR(userId)
