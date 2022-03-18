@@ -1,3 +1,8 @@
+/*
+ * Senbastian Garcia = 862117996
+ * Hamza Syed - 862097875
+ */
+
 CREATE INDEX index_usr on USR(userId, password, email ,name, dateOfBirth);
 
 CREATE INDEX index_work ON WORK_EXPR(userId, company, role, location, startDate, endDate);

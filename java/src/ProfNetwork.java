@@ -10,7 +10,11 @@
  *
  */
 
-
+/*
+ * Sebastian Garcia - 862117996
+ * Hamza Syned - 8620978775
+ *
+ */
 import java.sql.DriverManager;
 import java.sql.Connection;
 import java.sql.Statement;

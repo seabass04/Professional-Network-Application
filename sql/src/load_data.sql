@@ -1,3 +1,7 @@
+/*Sebastian Garcia - 862117996
+  Hamza Syed - 862097876
+*/
+
 COPY USR(
 	userId,
 	password,
