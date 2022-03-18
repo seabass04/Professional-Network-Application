@@ -23,7 +23,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.ArrayList;
-
+import java.text.SimpleDateFormat;  
+import java.util.Date;  
+import java.util.Calendar;
 /**
  * This class defines a simple embedded SQL utility class that is designed to
  * work with PostgreSQL JDBC drivers.
@@ -352,8 +354,10 @@ public class ProfNetwork {
          String password = in.readLine();
          System.out.print("\tEnter user email: ");
          String email = in.readLine();
+         System.out.print("\tEnter user name: ");
+         String name = in.readLine();
 
-	     String query = String.format("INSERT INTO USR (userId, password, email) VALUES ('%s','%s','%s')", login, password, email);
+	     String query = String.format("INSERT INTO USR (userId, password, email, name) VALUES ('%s','%s','%s','%s')", login, password, email, name);
          esql.executeUpdate(query);
          System.out.println ("User successfully created!");
       }catch(Exception e){
@@ -388,7 +392,7 @@ public class ProfNetwork {
     try{
          String query = String.format("INSERT INTO CONNECTION_USR (userId, connectionId, status) VALUES ('%s','%s','Request')", usr, friend);
          esqL.executeUpdate(query);
-         System.out.println ("Connection Request Sent! between" + usr + " and " + friend);
+         System.out.println ("Connection Request Sent! Between " + usr + " and " + friend);
 		  
       }catch(Exception e){
          System.err.println (e.getMessage ());
@@ -471,10 +475,12 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
           String q1 = String.format("SELECT * FROM Message");
           //esqL.executeQueryAndPrintResult(q1);
           int msgid = esqL.executeQuery(q1) + 1;
-          System.out.println(msgid);
+          //System.out.println(msgid);
           String msgidstring = String.valueOf(msgid);
           //TODO Get curret time
           String sendTime = "10/9/2011 9:49:00 PM";
+          sendTime = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+
           String deleteStatus = "0"; 
           String status = "Delivered";
           String q2 = String.format("INSERT INTO Message(msgId, senderId, receiverId, contents,sendTime, deleteStatus, status) VALUES (%s, '%s', '%s', '%s', '%s', %s, '%s')", msgidstring, usr, recieveruser, msg, sendTime, deleteStatus, status);
@@ -484,7 +490,7 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
         System.out.println("Message Sent!");
 
         String test = String.format("SELECT * FROM Message WHERE msgId = %s", msgidstring);
-        esqL.executeQueryAndPrintResult(test);
+        //esqL.executeQueryAndPrintResult(test);
 	}
 	else{
 
@@ -506,6 +512,7 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
           String msgidstring = String.valueOf(msgid);
           //TODO Get curret time
           String sendTime = "10/9/2011 9:49:00 PM";
+          sendTime = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
           String deleteStatus = "0"; 
           String status = "Delivered";
           String q2 = String.format("INSERT INTO Message(msgId, senderId, receiverId, contents,sendTime, deleteStatus, status) VALUES (%s, '%s', '%s', '%s', '%s', %s, '%s')", msgidstring, usr, recieveruser, msg, sendTime, deleteStatus, status);
@@ -542,7 +549,7 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
   
   public static void SearchPeople(ProfNetwork esql){
 	try{
-         System.out.print("\tEnter user to search: ");
+         System.out.print("\tEnter name to search: ");
          String usr = in.readLine();
 
 	    String query = String.format("SELECT name, userId, email FROM USR WHERE name = '%s' ", usr);
@@ -586,14 +593,14 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
                 int receivermsg = esql.executeQuery(receiverquery);
                 
                 if(sendermsg > 0){
-                    String query = String.format("SELECT msgId, senderId, contents FROM Message WHERE msgId = %s AND senderId = '%s' " , msgid, usr);
+                    String query = String.format("SELECT msgId, senderId, sendTime, contents, status FROM Message WHERE msgId = %s AND senderId = '%s' " , msgid, usr);
                     esql.executeQueryAndPrintResult(query);
                     
                     query = String.format("UPDATE Message SET status = 'Read' where msgId = '%s' ", msgid);
                     esql.executeUpdate(query);
                 }
                 else if(receivermsg > 0){
-                    String query = String.format("SELECT msgId, senderId, contents FROM Message WHERE msgId = %s AND receiverId = '%s' " , msgid, usr);
+                    String query = String.format("SELECT msgId, senderId, sendTime, status,contents FROM Message WHERE msgId = %s AND receiverId = '%s' " , msgid, usr);
                     esql.executeQueryAndPrintResult(query);
                     
                     query = String.format("UPDATE Message SET status = 'Read' where msgId = '%s' ", msgid);
@@ -670,8 +677,8 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
             System.out.println("---------");
             System.out.println("1. Send Message(s)");
             System.out.println("2. Send Connection");
-            System.out.println("3. View x friend");
-            System.out.println("4. Visit x friend");
+            System.out.println("3. View " + friend + " friends");
+            System.out.println("4. Visit " + friend + " friend");
             System.out.println("9. Exit");
             System.out.println("---------");
             System.out.print("Enter option: ");
@@ -679,7 +686,7 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
 
             
             if(option.equals("1")){
-                NewMessageWithFriend(esqL, usr, friend); 
+                NewMessageWithFriend(esqL, gUsr, friend); 
             }
             else if(option.equals("2")){
                 //NewConnection(esqL, usr, friend);
@@ -706,8 +713,8 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
          System.out.print("\tEnter friend to view: ");
          String friend = in.readLine();
 
-        System.out.println(usr);
-        System.out.println(friend);
+        //System.out.println(usr);
+        //System.out.println(friend);
         /*if(usr.equals("Verner")){
            System.out.println("line 730");
         }
@@ -721,7 +728,7 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
            
          String query2 = String.format("SELECT * FROM CONNECTION_USR WHERE (userId = '%s' AND connectionId = '%s') OR (connectionId = '%s' AND userId = '%s')", friend, usr, usr, friend);
          int results2 = esqL.executeQuery(query2);
-        System.out.println(results2);
+        //System.out.println(results2);
 
         if(results == 0 && results2 == 0){
           System.out.println("\tThere is no connection with this user");
@@ -785,18 +792,20 @@ public static void ChangeConnection(ProfNetwork esqL, String usr){
             System.out.println("Invalid userid\n");
         }
         else{
-            String query = String.format("SELECT * FROM CONNECTION_USR c WHERE (c.userId = '%s' or c.connectionId = '%s') AND c.status = 'Accept';", usr, usr);
+            /*String query = String.format("SELECT * FROM CONNECTION_USR c WHERE (c.userId = '%s' or c.connectionId = '%s') AND c.status = 'Accept';", usr, usr);
             int n = esqL.executeQuery(query);
-            System.out.println(n);
+            //System.out.println(n);
             if(n < 6){
                 System.out.println("Has 5 or less connections");
                 NewConnection(esqL, usr,friend);
             }
-            else/* if(CheckConnection(esqL,  gUsr , friend)){*/
+            else/* if(CheckConnection(esqL,  gUsr , friend)){
                 System.out.println("Connection is doable and sent");
                 NewConnection(esqL, usr,friend);
-            }
-       
+            }*/
+
+            NewConnection(esqL, usr,friend);
+        }  
 	}catch(Exception e){
          System.err.println (e.getMessage ());
       }
