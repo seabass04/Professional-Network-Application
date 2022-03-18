@@ -1,15 +1,15 @@
 CREATE INDEX index_usr_usrid ON USR(userId);
-CREATE INDEX index_usr_password ON USR(password);
+/*CREATE INDEX index_usr_password ON USR(password);
 CREATE INDEX index_usr_email ON USR(email);
 CREATE INDEX index_usr_name ON USR(name);
-CREATE INDEX index_usr_dateOfBirth ON USR(dateOfBirth);
+CREATE INDEX index_usr_dateOfBirth ON USR(dateOfBirth);*/
 
 CREATE INDEX index_work_expr_userid ON WORK_EXPR(userId);
-CREATE INDEX index_work_expr_company ON WORK_EXPR(company);
+/*CREATE INDEX index_work_expr_company ON WORK_EXPR(company);
 CREATE INDEX index_work_expr_role ON WORK_EXPR(role);
 CREATE INDEX index_work_expr_location ON WORK_EXPR(location);
 CREATE INDEX index_work_expr_startdate ON WORK_EXPR(startDate);
-CREATE INDEX index_work_expr_enddate ON WORK_EXPR(endDate);
+CREATE INDEX index_work_expr_enddate ON WORK_EXPR(endDate);*/
 
 CREATE INDEX index_edu_details_userid ON EDUCATIONAL_DETAILS(userId);
 CREATE INDEX index_edu_details_institutionname ON EDUCATIONAL_DETAILS(instituitionName);

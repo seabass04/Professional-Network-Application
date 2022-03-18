@@ -29,8 +29,10 @@ import java.util.ArrayList;
  * work with PostgreSQL JDBC drivers.
  *
  */
-public class ProfNetwork {
 
+
+public class ProfNetwork {
+   public static String gUsr;
    // reference to physical database connection.
    private Connection _connection = null;
 
@@ -263,6 +265,7 @@ public class ProfNetwork {
                default : System.out.println("Unrecognized choice!"); break;
             }//end switch
             if (authorisedUser != null) {
+              gUsr = authorisedUser;
               boolean usermenu = true;
               while(usermenu) {
                 System.out.println("\nMAIN MENU");
@@ -274,17 +277,21 @@ public class ProfNetwork {
                 System.out.println("5. Send Connection Request");
                 System.out.println("6. View Connection Request(s)");
                 System.out.println("7. Change Request Status");
+                System.out.println("8. View Friends");
+                System.out.println("9. View Friends Profile");
                 System.out.println(".........................");
-                System.out.println("9. Log out");
+                System.out.println("10. Log out");
                 switch (readChoice()){
                    case 1: NewMessage(esql, authorisedUser); break;
                    case 2: ViewMessage(esql, authorisedUser); break;
                    case 3: ChangePassword(esql, authorisedUser); break;
                    case 4: SearchPeople(esql); break;
-		           case 5: NewConnection(esql); break;
+		           case 5: SendRequest(esql, authorisedUser); break;
 		           case 6: ViewConnectionRequest(esql, authorisedUser); break;
-		           case 7: ChangeConnection(esql); break;
-                   case 9: usermenu = false; break;
+		           case 7: ChangeConnection(esql, authorisedUser); break;
+                   case 8: ViewFriends(esql, authorisedUser); break;
+                   case 9: ViewFriendsProfile(esql, authorisedUser); break;
+                   case 10: usermenu = false; break;
                    default : System.out.println("Unrecognized choice!"); break;
                 }
               }
@@ -377,55 +384,107 @@ public class ProfNetwork {
    }//end
 
 // Rest of the functions definition go in here
-  public static void NewConnection(ProfNetwork esqL){
-
-  }
-
-  public static void ViewConnectionRequest(ProfNetwork esqL, String usr){
-      try{
-         System.out.println("line 386");
-         // String query = String.format("SELECT userId, status FROM CONNECTION_USR WHERE connectionId = '%s' AND status != 'Accept'", usr);
-         String query = String.format("SELECT * FROM CONNECTION_USR");
-         esqL.executeQueryAndPrintResult(query);
-         System.out.println("line 389");
+  public static void NewConnection(ProfNetwork esqL, String usr, String friend){
+    try{
+         String query = String.format("INSERT INTO CONNECTION_USR (userId, connectionId, status) VALUES ('%s','%s','Request')", usr, friend);
+         esqL.executeUpdate(query);
+         System.out.println ("Connection Request Sent! between" + usr + " and " + friend);
 		  
       }catch(Exception e){
          System.err.println (e.getMessage ());
       }
   }
 
-  public static void ChangeConnection(ProfNetwork esqL){
 
+  public static void ViewConnectionRequest(ProfNetwork esqL, String usr){
+      try{
+         String query = String.format("SELECT userId, status FROM CONNECTION_USR WHERE connectionId = '%s' AND status != 'Accept'", usr);
+         int results = esqL.executeQuery(query);
+
+        if(results == 0){
+          System.out.println("You have no connection requests");
+        }
+        else{
+         esqL.executeQueryAndPrintResult(query);
+        }
+		  
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
   }
+
+public static void ChangeConnection(ProfNetwork esqL, String usr){
+    try{
+        System.out.print("\tEnter user: ");
+        String recieveuser = in.readLine();
+
+	    String q = String.format("SELECT * FROM USR WHERE userid = '%s'", recieveuser);
+	    int results = esqL.executeQuery(q);
+
+        
+        String query = String.format("SELECT * FROM CONNECTION_USR WHERE userId = '%s' AND status = 'Request' AND connectionId = '%s'", recieveuser, usr);
+        int results2 = esqL.executeQuery(query);
+
+	    if (results == 0 ){
+            System.out.println("Invalid userid\n");
+        }
+        else if (results2 == 0){
+            System.out.println("There are no connetion requests from this user");
+        }
+        else{
+           //esqL.executeQueryAndPrintResult(query);
+           System.out.print("\t1 to accept and 2 to deny: ");
+           String input = in.readLine();
+
+           if (input.equals("1")){
+               String updatequery = String.format("UPDATE CONNECTION_USR SET status = 'Accept' where userId = '%s' AND connectionId = '%s' ", recieveuser, usr);
+               esqL.executeUpdate(updatequery);
+               System.out.println ("Connection Accepted!");
+           }
+           else if (input.equals("2")){
+               String updatequery = String.format("UPDATE CONNECTION_USR SET status = 'Reject' where userId = '%s' AND connectionId = '%s'", recieveuser, usr);
+               esqL.executeUpdate(updatequery);
+               System.out.println ("Connection Denied!");
+           }
+           else{
+               System.out.println("Invalid Input");
+           }
+        }
+		  
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+  }
+
   public static void NewMessage(ProfNetwork esqL, String usr){
 	try{
          System.out.println("\tEnter user: ");
          String recieveruser = in.readLine();
 	
-	String q = String.format("SELECT * FROM USR WHERE userid = '%s'", recieveruser);
-	int results = esqL.executeQuery(q);
+        String q = String.format("SELECT * FROM USR WHERE userid = '%s'", recieveruser);
+        int results = esqL.executeQuery(q);
 
-	if (results > 0){
-	  System.out.println("\tEnter message: ");
-	  String msg = in.readLine();
+        if (results > 0){
+          System.out.println("\tEnter message: ");
+          String msg = in.readLine();
 
-	  String q1 = String.format("SELECT * FROM Message");
-	  //esqL.executeQueryAndPrintResult(q1);
-	  int msgid = esqL.executeQuery(q1) + 1;
-	  System.out.println(msgid);
-	  String msgidstring = String.valueOf(msgid);
-	  //TODO Get curret time
-	  String sendTime = "10/9/2011 9:49:00 PM";
-	  String deleteStatus = "0"; 
-	  String status = "Delivered";
-	  String q2 = String.format("INSERT INTO Message(msgId, senderId, receiverId, contents,sendTime, deleteStatus, status) VALUES (%s, '%s', '%s', '%s', '%s', %s, '%s')", msgidstring, usr, recieveruser, msg, sendTime, deleteStatus, status);
+          String q1 = String.format("SELECT * FROM Message");
+          //esqL.executeQueryAndPrintResult(q1);
+          int msgid = esqL.executeQuery(q1) + 1;
+          System.out.println(msgid);
+          String msgidstring = String.valueOf(msgid);
+          //TODO Get curret time
+          String sendTime = "10/9/2011 9:49:00 PM";
+          String deleteStatus = "0"; 
+          String status = "Delivered";
+          String q2 = String.format("INSERT INTO Message(msgId, senderId, receiverId, contents,sendTime, deleteStatus, status) VALUES (%s, '%s', '%s', '%s', '%s', %s, '%s')", msgidstring, usr, recieveruser, msg, sendTime, deleteStatus, status);
 
-	  esqL.executeUpdate(q2);
+          esqL.executeUpdate(q2);
 
-	System.out.println("Message Sent!");
+        System.out.println("Message Sent!");
 
-	String test = String.format("SELECT * FROM Message WHERE msgId = %s", msgidstring);
-	esqL.executeQueryAndPrintResult(test);
+        String test = String.format("SELECT * FROM Message WHERE msgId = %s", msgidstring);
+        esqL.executeQueryAndPrintResult(test);
 	}
 	else{
 
@@ -437,9 +496,31 @@ public class ProfNetwork {
 
   }
   
-  public static void SendRequest(ProfNetwork esqL){
+  public static void NewMessageWithFriend(ProfNetwork esqL, String usr, String recieveruser){
+	try{
+          System.out.println("\tEnter message: ");
+          String msg = in.readLine();
+
+          String q1 = String.format("SELECT * FROM Message");
+          int msgid = esqL.executeQuery(q1) + 1;
+          String msgidstring = String.valueOf(msgid);
+          //TODO Get curret time
+          String sendTime = "10/9/2011 9:49:00 PM";
+          String deleteStatus = "0"; 
+          String status = "Delivered";
+          String q2 = String.format("INSERT INTO Message(msgId, senderId, receiverId, contents,sendTime, deleteStatus, status) VALUES (%s, '%s', '%s', '%s', '%s', %s, '%s')", msgidstring, usr, recieveruser, msg, sendTime, deleteStatus, status);
+
+          esqL.executeUpdate(q2);
+
+        System.out.println("Message Sent!");
+
+	}catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
 
   }
+  
+  
 
   public static void ChangePassword(ProfNetwork esql, String usr){
 	try{
@@ -580,4 +661,261 @@ public class ProfNetwork {
 	}
   }
 
+
+    public static void FriendsMenu(ProfNetwork esqL, String usr, String friend){
+        try{
+
+            while(true){
+            System.out.println("\nFriend MENU");
+            System.out.println("---------");
+            System.out.println("1. Send Message(s)");
+            System.out.println("2. Send Connection");
+            System.out.println("3. View x friend");
+            System.out.println("4. Visit x friend");
+            System.out.println("9. Exit");
+            System.out.println("---------");
+            System.out.print("Enter option: ");
+            String option = in.readLine();
+
+            
+            if(option.equals("1")){
+                NewMessageWithFriend(esqL, usr, friend); 
+            }
+            else if(option.equals("2")){
+                //NewConnection(esqL, usr, friend);
+                SendRequest(esqL, usr);
+            }
+            else if(option.equals("3")){
+                ViewFriendsConncetion(esqL, friend);
+            }
+            else if(option.equals("4")){
+                ViewFriendsProfile(esqL, friend);
+            }
+            else if(option.equals("9")){
+                break;
+            }
+            }
+        }catch(Exception e){
+            System.err.println(e.getMessage());
+        }   
+        
+   } 
+
+    public static void ViewFriendsProfile(ProfNetwork esqL, String usr){
+      try{
+         System.out.print("\tEnter friend to view: ");
+         String friend = in.readLine();
+
+        System.out.println(usr);
+        System.out.println(friend);
+        /*if(usr.equals("Verner")){
+           System.out.println("line 730");
+        }
+        if(friend.equals("Angel")){
+            System.out.println("line 733");
+        }*/
+           
+         String query = String.format("SELECT * FROM CONNECTION_USR WHERE (userId = '%s' AND connectionId = '%s') OR (connectionId = '%s' AND userId = '%s')", usr, friend, friend, usr);
+         int results = esqL.executeQuery(query);
+
+           
+         String query2 = String.format("SELECT * FROM CONNECTION_USR WHERE (userId = '%s' AND connectionId = '%s') OR (connectionId = '%s' AND userId = '%s')", friend, usr, usr, friend);
+         int results2 = esqL.executeQuery(query2);
+        System.out.println(results2);
+
+        if(results == 0 && results2 == 0){
+          System.out.println("\tThere is no connection with this user");
+        }
+        else{
+         System.out.println("Viewing " + friend + " profile");
+         FriendsMenu(esqL, usr, friend);
+        }
+		  
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+    }
+
+    
+
+    public static void ViewFriendsConncetion(ProfNetwork esqL, String friend){
+      try{
+         String query = String.format("SELECT U.name, U.userId FROM CONNECTION_USR C, USR U WHERE ((C.connectionId = U.userId AND C.userId = '%s') OR  (C.userId = U.userId AND C.connectionId = '%s')) AND C.status = 'Accept'", friend, friend);
+         int results = esqL.executeQuery(query);
+
+        if(results == 0){
+          System.out.println("Your connection has no friends :(");
+        }
+        else{
+         esqL.executeQueryAndPrintResult(query);
+        }
+		  
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+ 
+    }
+    public static void ViewFriends(ProfNetwork esqL, String usr){
+      try{
+         String query = String.format("SELECT U.name, U.userId FROM CONNECTION_USR C, USR U WHERE ((C.connectionId = U.userId AND C.userId = '%s') OR  (C.userId = U.userId AND C.connectionId = '%s')) AND C.status = 'Accept'", usr, usr);
+         int results = esqL.executeQuery(query);
+
+        if(results == 0){
+          System.out.println("You have no friends :(");
+        }
+        else{
+         esqL.executeQueryAndPrintResult(query);
+        }
+		  
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+ 
+    }
+
+    public static void SendRequest(ProfNetwork esqL, String usr){
+	try{
+        System.out.println("Enter usr to send connection: ");
+        String friend = in.readLine();
+  
+	    String q = String.format("SELECT * FROM USR WHERE userid = '%s'", friend);
+	    int results = esqL.executeQuery(q);
+
+	    if (results == 0 ){
+            System.out.println("Invalid userid\n");
+        }
+        else{
+            String query = String.format("SELECT * FROM CONNECTION_USR c WHERE (c.userId = '%s' or c.connectionId = '%s') AND c.status = 'Accept';", usr, usr);
+            int n = esqL.executeQuery(query);
+            System.out.println(n);
+            if(n < 6){
+                System.out.println("Has 5 or less connections");
+                NewConnection(esqL, usr,friend);
+            }
+            else/* if(CheckConnection(esqL,  gUsr , friend)){*/
+                System.out.println("Connection is doable and sent");
+                NewConnection(esqL, usr,friend);
+            }
+       
+	}catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+
+  }
+    public static boolean CheckConnection(ProfNetwork esqL, String usr, String friend){
+      try{
+        //System.out.println(usr);
+        //System.out.println(friend);
+        //String query = String.format("SELECT c.userId, c.connectionId FROM CONNECTION_USR c WHERE c.status = 'Accepted' AND (c.userId = '%s' or c.connectionId = '%s');", usr, usr);
+        String query = String.format("SELECT c.userId, c.connectionId FROM CONNECTION_USR c WHERE (c.userId = '%s' or c.connectionId = '%s') AND c.status = 'Accept';", usr, usr);
+        //int size = esqL.executeQuery(query);
+        //System.out.println("q result size: " + size);
+
+        List<List<String>> ids = esqL.executeQueryAndReturnResult(query);
+        List<String> allIds = new ArrayList<String>();
+        //System.out.println("ids size: " + ids.size());
+
+        for(int i = 0; i < ids.size(); ++i){ //add userids to allIds
+            for(int j = 0; j < ids.get(i).size(); ++j){
+                String curr = ids.get(i).get(j).trim();
+                //System.out.println("[" + curr + "]");
+                if(!usr.equals(curr)){
+                   //System.out.println("Added on first: " + "[" + curr + "]");
+                    allIds.add(curr);
+                }
+            }
+        }
+
+        //System.out.println("all ids size: " + allIds.size());/
+      /*  for(int i = 0; i < allIds.size(); ++i){ //check if friend in 1st level of connection
+            //System.out.println(allIds.get(i));
+            if(friend.equals(allIds.get(i))){
+                System.out.println("Within one level");
+                return true;
+            }
+        }
+*/
+        //System.out.println("line 829 so failed");
+    //System.out.println("firs size: " + allIds.size());
+    int prevsize = allIds.size();
+    boolean duplicate = false;
+    for(int i = 0; i < allIds.size(); ++i){ //add 2nd level of connection to allIds
+        //query = String.format("SELECT c.userId, c.connectionId FROM CONNECTION_USR c WHERE (c.userId = '%s' AND c.status = 'Accept' ) or (c.connectionId = '%s' AND c.status = 'Accept');", allIds.get(i).trim(), allIds.get(i).trim());
+        query = String.format("SELECT c.userId, c.connectionId FROM CONNECTION_USR c WHERE (c.userId = '%s' or c.connectionId = '%s') AND c.status = 'Accept';", allIds.get(i).trim() , allIds.get(i).trim() );
+        System.out.println("Adding [" +  allIds.get(i).trim() + "] firnds") ;
+        ids = esqL.executeQueryAndReturnResult(query);
+        for(int k = 0; k < ids.size(); ++k){
+            for(int j = 0; j < ids.get(k).size(); ++j){
+                String curr = ids.get(k).get(j).trim();
+                if(k >= 1)
+                    break;
+
+
+                if(curr.equals(friend)){
+                    //System.out.println("second level");    
+                    return true;
+                }
+                if(!usr.equals(curr) && !allIds.contains(curr)){
+                    System.out.println("added on 2nd level: " + "[" + curr + "]");
+                    allIds.add(curr);
+                }
+               /* duplicate = false;
+                for(int n = 0; n < allIds.size(); ++n){
+                    if(allIds.get(n).equals(curr){
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if(duplicate){
+                    continue;
+                }
+                allIds.add(curr);*/
+            }
+        }
+    }
+    
+
+    
+        return false;
+    /*for(int i = 0; i < allIds.size(); ++i){ //check if friend in 2nd level of connection
+        if(friend.equals(allIds.get(i))){
+            System.out.println("second level check 2");
+            return true;
+        }
+    }*/
+/*
+    duplicate = false;
+    for(int i = 0; i < allIds.size(); ++i){ //add 3rd level of connection to allIds
+        query = String.format("SELECT userId, connectionId FROM CONNECTION_USR c WHERE (c.userId == '%s' or c.connectionId = '%s') AND c.status = 'Accepted';", allIds.get(i), allIds.get(i));
+        ids = esqL.executeQueryAndReturnResult(query);
+        for(int k = 0; k < ids.size(); ++k){
+            for(int j = 0; j < ids.get(k).size(); ++j){
+                duplicate = false;
+                for(int n = 0; n < allIds.size(); ++n){
+                    if(allIds.get(n).equals(ids.get(k).get(j))){
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if(duplicate){
+                    continue;
+                }
+                allIds.add(ids.get(k).get(j));
+            }
+        }
+    }
+
+    for(int i = 0; i < allIds.size(); ++i){ //check if friend in 3rd level of connection
+        if(friend.equals(allIds.get(i))){
+            return true;
+        }
+    }
+*/
+
+      }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+    return false;
+}
+    
 }//end ProfNetwork

@@ -5,3 +5,5 @@ set shiftwidth=4
 set expandtab
 
 set smartcase
+
+set nowrap
